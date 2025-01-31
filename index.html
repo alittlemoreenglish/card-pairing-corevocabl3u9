@@ -1,0 +1,648 @@
+<html><head><base href="." /><title>Vocabulary Card Pairing</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    color: white;
+    box-sizing: border-box;
+}
+
+@keyframes fadeOutSlide {
+    0% {
+        opacity: 1;
+        transform: scale(1) rotate(0);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.8) rotate(15deg) translateY(50px);
+    }
+}
+
+.game-container {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.deck {
+    width: 140px;
+    height: 200px;
+    background: #2c3e50;
+    border-radius: 10px;
+    border: 2px solid #34495e;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.2s;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.deck:hover {
+    transform: scale(1.05);
+}
+
+.deck::after {
+    content: "♠️♥️♣️♦️";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+}
+
+.drawn-card {
+    width: 140px;
+    height: 200px;
+    background: white;
+    border-radius: 10px;
+    border: 2px solid #34495e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    font-size: 24px;
+    color: black;
+    position: relative;
+    transition: transform 0.3s, opacity 0.3s;
+    opacity: 0;
+    transform: translateX(-50px);
+    padding: 10px;
+}
+
+.drawn-card.visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.drawn-card.red {
+    color: #e74c3c;
+}
+
+.chinese-word {
+    font-size: 36px;
+    font-weight: bold;
+}
+
+.card-counter, .timer {
+    position: absolute;
+    font-size: 18px;
+}
+
+.card-counter {
+    top: 20px;
+    right: 20px;
+}
+
+.timer {
+    top: 20px;
+    left: 20px;
+}
+
+.input-section {
+    margin: 20px 0;
+}
+
+input[type="text"] {
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: none;
+    margin-right: 10px;
+}
+
+.submit-btn, .reset-btn {
+    padding: 10px 20px;
+    background: #3498db;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.submit-btn:hover, .reset-btn:hover {
+    background: #2980b9;
+}
+
+.skip-btn {
+    padding: 10px 20px;
+    background: #e74c3c;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.skip-btn:hover {
+    background: #c0392b;
+}
+
+.player-hand {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-width: 800px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.collected-card {
+    width: 100px;
+    height: 140px;
+    background: white;
+    border-radius: 5px;
+    border: 1px solid #34495e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    font-size: 16px;
+    padding: 5px;
+    color: black;
+}
+
+.collected-card.removing {
+    animation: fadeOutSlide 0.5s ease-out forwards;
+}
+
+.win-message, .score-display {
+    font-size: 24px;
+    margin-top: 20px;
+}
+
+.win-message {
+    color: #2ecc71;
+    display: none;
+}
+
+.score-display {
+    color: #f1c40f;
+    margin-bottom: 20px;
+}
+
+.feedback {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px 40px;
+    border-radius: 10px;
+    font-size: 24px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 1000;
+}
+
+.feedback.correct {
+    background-color: rgba(46, 204, 113, 0.9);
+    color: white;
+}
+
+.feedback.incorrect {
+    background-color: rgba(231, 76, 60, 0.9);
+    color: white;
+}
+
+.feedback.visible {
+    opacity: 1;
+}
+</style>
+</head>
+<body>
+    <div class="timer" id="timer">Time: 0:00</div>
+    <h1>Vocabulary Card Pairing</h1>
+    <div class="score-display" id="scoreDisplay">Pairs collected: 0</div>
+    <div class="game-container">
+        <div class="deck" id="deck"></div>
+        <div class="drawn-card" id="drawnCard"></div>
+    </div>
+    <div class="input-section">
+        <input type="text" id="wordInput" placeholder="Enter English translation">
+        <button class="submit-btn" id="submitBtn">Submit</button>
+        <button class="skip-btn" id="skipBtn">Skip Card</button>
+    </div>
+    <button class="reset-btn" id="resetBtn">New Game</button>
+    <div class="card-counter" id="cardCounter"></div>
+    <div class="win-message" id="winMessage">Congratulations! You've collected a Four of a Kind!</div>
+    <div class="player-hand" id="playerHand"></div>
+    <div class="feedback" id="feedback"></div>
+
+<div style="
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    color: #7f8c8d;
+    text-align: center;
+    padding: 10px;
+">
+    Author: Aaron Shi. Released in December 2024.
+</div>
+
+<script>
+class Card {
+    constructor(suit, value, chinese, english) {
+        this.suit = suit;
+        this.value = value;
+        this.chinese = chinese;
+        this.english = english;
+    }
+}
+
+class Deck {
+    constructor() {
+        this.words = [
+{chinese: '砰一聲', english: 'bang'},
+{chinese: '引用', english: 'quote'},
+{chinese: '生的', english: 'raw'},
+{chinese: '未加工的', english: 'raw'},
+{chinese: '網路', english: 'network'},
+{chinese: '結冰', english: 'freeze'},
+{chinese: '冷死了', english: 'freezing'},
+{chinese: '冷凍的', english: 'frozen'},
+{chinese: '請求', english: 'request'},
+{chinese: '有價值的', english: 'valuable'},
+{chinese: '心理的', english: 'mental'},
+{chinese: '受害者', english: 'victim'},
+{chinese: '共和國', english: 'republic'},
+{chinese: '裝載', english: 'load'},
+{chinese: '卸貨', english: 'unload'},
+{chinese: '相反的', english: 'opposite'},
+{chinese: '較優的', english: 'superior'},
+{chinese: '較差的', english: 'inferior'},
+{chinese: '緊急事件', english: 'emergency'},
+{chinese: '有創造力的', english: 'creative'},
+{chinese: '生物', english: 'creature'},
+{chinese: '創造者', english: 'creator'},
+{chinese: '媒體', english: 'media'},
+{chinese: '極度的', english: 'extreme'},
+{chinese: '極端地', english: 'extremely'},
+{chinese: '扳動開關', english: 'switch'},
+{chinese: '充分', english: 'plenty'},
+{chinese: '意外', english: 'accident'},
+{chinese: '意外的', english: 'accidental'},
+{chinese: '運貨馬車', english: 'wagon'},
+{chinese: '廂型車', english: 'van'},
+{chinese: '文本', english: 'text'},
+{chinese: '膽敢', english: 'dare'},
+{chinese: '學者', english: 'scholar'},
+{chinese: '獎學金', english: 'scholarship'},
+{chinese: '風險', english: 'risk'},
+{chinese: '寬鬆的', english: 'loose'},
+{chinese: '鬆垮地', english: 'loosely'},
+{chinese: '鬆開', english: 'loosen'},
+{chinese: '說服', english: 'persuade'},
+{chinese: '圓錐體', english: 'cone'},
+{chinese: '勺子', english: 'scoop'},
+{chinese: '奇怪的', english: 'odd'},
+{chinese: '呼吸(v.)', english: 'breathe'},
+{chinese: '童年時期', english: 'childhood'},
+{chinese: '釋放', english: 'release'},
+{chinese: '心情', english: 'mood'},
+{chinese: '脾氣', english: 'temper'},
+{chinese: '密碼', english: 'password'}
+        ];
+        this.reset();
+    }
+
+    reset() {
+        const suits = ['♠', '♥', '♣', '♦'];
+        const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        this.cards = [];
+        
+        for (let suit of suits) {
+            for (let value of values) {
+                const randomWord = this.words[Math.floor(Math.random() * this.words.length)];
+                this.cards.push(new Card(suit, value, randomWord.chinese, randomWord.english));
+            }
+        }
+        
+        this.shuffle();
+    }
+
+    shuffle() {
+        for (let i = this.cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
+        }
+    }
+
+    draw() {
+        if (this.cards.length === 0) return null;
+        return this.cards.pop();
+    }
+
+    remainingCards() {
+        return this.cards.length;
+    }
+
+    addToBottom(card) {
+        this.cards.unshift(card);
+    }
+}
+
+const PAIRS_TO_WIN = 10;
+
+let deck = new Deck();
+let currentCard = null;
+let playerHand = [];
+let startTime = Date.now();
+let timerInterval;
+let pairCounter = 0;
+
+const deckElement = document.getElementById('deck');
+const drawnCardElement = document.getElementById('drawnCard');
+const resetBtn = document.getElementById('resetBtn');
+const cardCounter = document.getElementById('cardCounter');
+const wordInput = document.getElementById('wordInput');
+const submitBtn = document.getElementById('submitBtn');
+const playerHandElement = document.getElementById('playerHand');
+const winMessage = document.getElementById('winMessage');
+const timerElement = document.getElementById('timer');
+const scoreDisplay = document.getElementById('scoreDisplay');
+const skipBtn = document.getElementById('skipBtn');
+
+function updateTimer() {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const minutes = Math.floor(elapsed / 60);
+    const seconds = elapsed % 60;
+    timerElement.textContent = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function startNewGame() {
+    deck = new Deck();
+    playerHand = [];
+    pairCounter = 0; 
+    currentCard = null; 
+    playerHandElement.innerHTML = '';
+    winMessage.style.display = 'none';
+    drawnCardElement.classList.remove('visible');
+    startTime = Date.now();
+    clearInterval(timerInterval);
+    timerInterval = setInterval(updateTimer, 1000);
+    updateCardCounter();
+    updatePairCounter();
+    wordInput.value = '';
+}
+
+function updateCardCounter() {
+    cardCounter.textContent = `Cards remaining: ${deck.remainingCards()}`;
+}
+
+function drawCard() {
+    currentCard = deck.draw();
+    if (currentCard) {
+        drawnCardElement.classList.remove('visible');
+        setTimeout(() => {
+            drawnCardElement.innerHTML = `
+                <div>${currentCard.value}${currentCard.suit}</div>
+                <div class="chinese-word">${currentCard.chinese}</div>
+            `;
+            drawnCardElement.classList.remove('red');
+            if (currentCard.suit === '♥' || currentCard.suit === '♦') {
+                drawnCardElement.classList.add('red');
+            }
+            drawnCardElement.classList.add('visible');
+        }, 300);
+        updateCardCounter();
+    }
+}
+
+function updatePairCounter() {
+    scoreDisplay.textContent = `Pairs collected: ${pairCounter}`;
+}
+
+function showFeedback(isCorrect) {
+    const feedbackElement = document.getElementById('feedback');
+    feedbackElement.textContent = isCorrect ? 'Correct!' : 'Incorrect!';
+    feedbackElement.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+    feedbackElement.classList.add('visible');
+    
+    setTimeout(() => {
+        feedbackElement.classList.remove('visible');
+    }, 1000);
+}
+
+function checkFourOfAKind() {
+    const valueCounts = {};
+    playerHand.forEach(card => {
+        valueCounts[card.value] = (valueCounts[card.value] || 0) + 1;
+    });
+    
+    // Check if won by total pairs
+    if (pairCounter >= PAIRS_TO_WIN) {
+        endGame();
+        return true;
+    }
+    
+    return Object.values(valueCounts).some(count => count >= 4);
+}
+
+function endGame() {
+    clearInterval(timerInterval);
+    const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+    const minutes = Math.floor(timeSpent / 60);
+    const seconds = timeSpent % 60;
+    const remainingCards = deck.remainingCards();
+    
+    // Create end game overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: #2c3e50;
+        padding: 40px;
+        border-radius: 20px;
+        text-align: center;
+        color: white;
+        max-width: 80%;
+    `;
+    
+    content.innerHTML = `
+        <h2 style="color: #2ecc71; margin-bottom: 20px;">Congratulations!</h2>
+        <p style="font-size: 20px; margin: 10px 0;">You have successfully collected ${pairCounter} pairs!</p>
+        <p style="font-size: 20px; margin: 10px 0;">Time spent: ${minutes}:${seconds.toString().padStart(2, '0')}</p>
+        <p style="font-size: 20px; margin: 10px 0;">Cards remaining in deck: ${remainingCards}</p>
+        <p style="font-size: 18px; margin-top: 20px; color: #3498db;">Refresh the page to play again!</p>
+    `;
+    
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
+}
+
+function calculateScore() {
+    const valueCounts = {};
+    playerHand.forEach(card => {
+        valueCounts[card.value] = (valueCounts[card.value] || 0) + 1;
+    });
+    
+    let cardsToRemove = [];
+    let pairsFound = 0;
+
+    // Check for four of a kind first
+    for (let value in valueCounts) {
+        if (valueCounts[value] >= 4) {
+            pairsFound += 2; // Count four of a kind as 2 pairs
+            // Mark all cards of this value for removal
+            playerHand.forEach((card, index) => {
+                if (card.value === value) {
+                    cardsToRemove.push(index);
+                }
+            });
+        }
+    }
+
+    // Then check for pairs
+    if (cardsToRemove.length === 0) { // Only check pairs if no four of a kind was found
+        for (let value in valueCounts) {
+            if (valueCounts[value] >= 2) {
+                const pairs = Math.floor(valueCounts[value] / 2);
+                pairsFound += pairs;
+                
+                // Find the cards to remove for this value
+                let pairsMarked = 0;
+                playerHand.forEach((card, index) => {
+                    if (card.value === value && pairsMarked < pairs * 2) {
+                        cardsToRemove.push(index);
+                        pairsMarked++;
+                    }
+                });
+            }
+        }
+    }
+
+    // Animate and remove cards
+    const cardElements = playerHandElement.getElementsByClassName('collected-card');
+    cardsToRemove.forEach(index => {
+        if (cardElements[index]) {
+            cardElements[index].classList.add('removing');
+        }
+    });
+
+    // Wait for animation to complete before removing cards
+    setTimeout(() => {
+        // Remove cards from highest index to lowest to avoid shifting issues
+        cardsToRemove.sort((a, b) => b - a).forEach(index => {
+            playerHand.splice(index, 1);
+        });
+        // Update the visual display of cards
+        updatePlayerHandDisplay();
+    }, 500);
+
+    pairCounter += pairsFound;
+    
+    // Check if reached 10 pairs
+    if (pairCounter >= PAIRS_TO_WIN) {
+        endGame();
+    }
+    
+    return pairsFound;
+}
+
+function updatePlayerHandDisplay() {
+    playerHandElement.innerHTML = '';
+    playerHand.forEach(card => {
+        const cardElement = document.createElement('div');
+        cardElement.className = `collected-card${card.suit === '♥' || card.suit === '♦' ? ' red' : ''}`;
+        cardElement.innerHTML = `
+            <div>${card.value}${card.suit}</div>
+            <div>${card.chinese}</div>
+            <div>${card.english}</div>
+        `;
+        playerHandElement.appendChild(cardElement);
+    });
+}
+
+function handleSubmit() {
+    if (!currentCard) return;
+    
+    const isCorrect = wordInput.value.toLowerCase() === currentCard.english.toLowerCase();
+    showFeedback(isCorrect);
+    
+    if (isCorrect) {
+        playerHand.push(currentCard);
+        const cardElement = document.createElement('div');
+        cardElement.className = `collected-card${currentCard.suit === '♥' || currentCard.suit === '♦' ? ' red' : ''}`;
+        cardElement.innerHTML = `
+            <div>${currentCard.value}${currentCard.suit}</div>
+            <div>${currentCard.chinese}</div>
+            <div>${currentCard.english}</div>
+        `;
+        playerHandElement.appendChild(cardElement);
+        
+        const pairsEarned = calculateScore();
+        updatePairCounter();
+        
+        if (checkFourOfAKind() || pairCounter >= PAIRS_TO_WIN) {
+            endGame();
+        } else {
+            // Automatically draw the next card if there are cards remaining
+            setTimeout(() => {
+                if (deck.remainingCards() > 0) {
+                    drawCard();
+                }
+            }, 500);
+        }
+        
+        currentCard = null;
+        drawnCardElement.classList.remove('visible');
+    }
+    
+    wordInput.value = '';
+}
+
+function handleSkip() {
+    if (!currentCard) return;
+    
+    // Add current card to bottom of deck
+    deck.addToBottom(currentCard);
+    
+    // Update card counter since we moved a card
+    updateCardCounter();
+    
+    // Clear current card display
+    drawnCardElement.classList.remove('visible');
+    
+    // Draw next card after a short delay
+    setTimeout(() => {
+        if (deck.remainingCards() > 0) {
+            drawCard();
+        }
+    }, 500);
+    
+    // Clear input field
+    wordInput.value = '';
+}
+
+deckElement.addEventListener('click', drawCard);
+submitBtn.addEventListener('click', handleSubmit);
+resetBtn.addEventListener('click', startNewGame);
+wordInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleSubmit();
+});
+skipBtn.addEventListener('click', handleSkip);
+
+startNewGame();
+</script>
+</body></html>
